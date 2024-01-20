@@ -11,7 +11,7 @@ def log_instance_info(instance_type: str, region_name: str, status: str, start_t
     # Log info of the instance type for a specific region
     end_time = datetime.now()
 
-    if status == "Not Available" and start_time is not None:
+    if status == "Unavailable" and start_time is not None:
         duration = end_time - start_time
         logging.info(
             f"Instance Type: {instance_type}, Region: {region_name} - "
@@ -30,6 +30,9 @@ def log_instance_info(instance_type: str, region_name: str, status: str, start_t
             f"Start: {start_time} - "
             f"Duration: {duration}"
         )
+    elif status == "Updated":
+        # TODO Should this even be passed in here? seems like no
+        pass
     else:
         logging.error(f"Invalid status for Instance Type: {instance_type}, Region: {region_name} - Status: {status}")
 
@@ -57,13 +60,3 @@ def render_to_console(
                             f'Last available at: {reference_time:%Y-%m-%d %H:%M:%S.%f}, '
                             f'Duration {duration_message}: {duration_since_reference}')
     output_stream.flush()
-
-# # Example usage in tests
-# from io import StringIO
-#
-# def test_render_to_console():
-#     buffer = StringIO()
-#     # Call the function with mock data and buffer as the output_stream
-#     render_to_console(True, mock_instances, mock_last_available_time, mock_start_time, buffer)
-#     # Now buffer.getvalue() contains the output of the function
-#     print(buffer.getvalue())  # or use assertions to test the output\

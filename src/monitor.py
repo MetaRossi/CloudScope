@@ -44,7 +44,7 @@ class Monitor(BaseModel):
                 # New instance available
                 self.available_instances[instance_name] = InstanceType(**instance_data,
                                                                        regions_with_capacity_available=regions)
-                self.log_change(instance_name, regions, 'available')
+                self.log_change(instance_name, regions, 'Available')
             else:
                 # Check for changes in regions
                 available_regions = self.available_instances[instance_name].regions_with_capacity_available
@@ -53,13 +53,13 @@ class Monitor(BaseModel):
 
                 if current_regions != new_regions:
                     self.available_instances[instance_name].regions_with_capacity_available = regions
-                    self.log_change(instance_name, regions, 'updated')
+                    self.log_change(instance_name, regions, 'Updated')
 
         # Check for instances that are no longer available
         for instance_name in list(self.available_instances):
             if instance_name not in new_available:
                 available_regions = self.available_instances[instance_name].regions_with_capacity_available
-                self.log_change(instance_name, available_regions, 'unavailable')
+                self.log_change(instance_name, available_regions, 'Unavailable')
                 del self.available_instances[instance_name]
 
         # Render to console with new information
