@@ -1,0 +1,5 @@
+/__config/
+/__local/
+/__logs/
+.idea/
+*.pyc

@@ -23,6 +23,9 @@ LOG_FILE = LOG_DIR / f"instance_availability/{START_TIME}.log"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s %(levelname)s:%(message)s")
 
+# Create folder to store logs
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 # Global map to store instance types and their availability times
 instance_map = {}
 

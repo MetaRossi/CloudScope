@@ -1,0 +1,4 @@
+[default]
+sleep_interval_ms = 1000
+log_dir = "__logs"
+api_key = "replace_with_your_api_key_in_the_config_toml_file"
