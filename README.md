@@ -49,6 +49,10 @@ https://pydantic-docs.helpmanual.io/
      ```bash
      pipenv shell
      ```
+4. Get a Lambda Labs API Key
+   - If you do not already have a Lambda Labs account, create one here: https://lambdalabs.com/
+   - Once you have an account, you can get an API key here: https://cloud.lambdalabs.com/api-keys
+   - You will need the API key to configure the application.
 
 ## Configuration
 
