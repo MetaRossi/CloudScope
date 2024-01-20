@@ -1,6 +1,4 @@
-import io
 import logging
-import sys
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -42,21 +40,19 @@ def render_to_console(
     instances: Dict[str, InstanceType],
     last_available_time: Optional[datetime],
     start_time: datetime,
-    output_stream: io.TextIOWrapper = sys.stdout
 ) -> None:
     current_time = datetime.now()
     if is_available:
         available_instance_names = [instance.name for instance in instances.values()]
         duration = current_time - (last_available_time or current_time)
-        output_stream.write(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
-                            f'Available Instances: {available_instance_names}, '
-                            f'Availability Duration: {duration}')
+        print(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
+              f'Available Instances: {available_instance_names}, '
+              f'Availability Duration: {duration}')
     else:
         reference_time = last_available_time if last_available_time is not None else start_time
         duration_since_reference = current_time - reference_time
         duration_message = "since last available" if last_available_time is not None else "since start"
-        output_stream.write(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
-                            f'No instances available. '
-                            f'Last available at: {reference_time:%Y-%m-%d %H:%M:%S.%f}, '
-                            f'Duration {duration_message}: {duration_since_reference}')
-    output_stream.flush()
+        print(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
+              f'No instances available. '
+              f'Last available at: {reference_time:%Y-%m-%d %H:%M:%S.%f}, '
+              f'Duration {duration_message}: {duration_since_reference}')

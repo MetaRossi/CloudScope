@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -7,10 +7,6 @@ from src.data_structures.instance_type import InstanceType
 from src.data_structures.region import Region
 from src.lambda_api import fetch_instance_types
 from src.output import log_instance_info, render_to_console
-
-# Type aliases to enable testing with mocks
-TimeFunction = Callable[[], datetime]
-DataFunction = Callable[[str], tuple]
 
 
 class Monitor(BaseModel):
@@ -21,19 +17,15 @@ class Monitor(BaseModel):
     last_available_time: Optional[datetime] = None
     is_available: bool = False
 
-    def poll(self,
-             api_key: str,
-             time_func: TimeFunction = datetime.now,
-             data_func: DataFunction = fetch_instance_types
-             ) -> None:
-        new_available, data = data_func(api_key)
+    def poll(self, api_key: str) -> None:
+        new_available, data = fetch_instance_types(api_key)
         previous_state = self.is_available
         self.is_available = bool(new_available)
 
         # Update last_available_time only when transitioning from no available instances to some available instances
         if self.is_available and not previous_state:
             if self.last_available_time is None:
-                self.last_available_time = time_func()
+                self.last_available_time = datetime.now()
 
         # Process and compare the fetched data with the current state
         for instance_name in new_available:

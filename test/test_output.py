@@ -21,56 +21,52 @@ class TestRenderToConsole(unittest.TestCase):
             regions_with_capacity_available=[Region(name="us-west-1", description="US West Region")]
         )
 
-    def test_available_instances(self):
-        buffer = StringIO()
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_available_instances(self, mock_stdout):
         render_to_console(
             True,
             {"test-instance": self.mock_instance},
             self.mock_last_available_time,
             self.mock_start_time,
-            buffer
         )
-        self.assertIn("Available Instances", buffer.getvalue())
+        self.assertIn("Available Instances", mock_stdout.getvalue())
 
-    def test_no_instances_no_last_available(self):
-        buffer = StringIO()
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_no_instances_no_last_available(self, mock_stdout):
         render_to_console(
             False,
             {},
             None,
             self.mock_start_time,
-            buffer
         )
-        self.assertIn("No instances available", buffer.getvalue())
-        self.assertIn("since start", buffer.getvalue())
+        self.assertIn("No instances available", mock_stdout.getvalue())
+        self.assertIn("since start", mock_stdout.getvalue())
 
-    def test_no_instances_with_last_available(self):
-        buffer = StringIO()
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_no_instances_with_last_available(self, mock_stdout):
         render_to_console(
             False,
             {},
             self.mock_last_available_time,
             self.mock_start_time,
-            buffer
         )
-        self.assertIn("No instances available", buffer.getvalue())
-        self.assertIn("since last available", buffer.getvalue())
+        self.assertIn("No instances available", mock_stdout.getvalue())
+        self.assertIn("since last available", mock_stdout.getvalue())
 
-    def test_long_duration_since_last_available(self):
-        buffer = StringIO()
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_long_duration_since_last_available(self, mock_stdout):
         long_last_available_time = datetime.datetime(2023, 1, 1, 1, 0, 0)
         render_to_console(
             False,
             {},
             long_last_available_time,
             self.mock_start_time,
-            buffer
         )
-        self.assertIn("No instances available", buffer.getvalue())
-        self.assertIn("since last available", buffer.getvalue())
+        self.assertIn("No instances available", mock_stdout.getvalue())
+        self.assertIn("since last available", mock_stdout.getvalue())
 
-    def test_multiple_available_instances(self):
-        buffer = StringIO()
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_multiple_available_instances(self, mock_stdout):
         mock_instance2 = InstanceType(
             name="test-instance-2",
             description="Another test instance",
@@ -83,11 +79,10 @@ class TestRenderToConsole(unittest.TestCase):
             {"test-instance": self.mock_instance, "test-instance-2": mock_instance2},
             self.mock_last_available_time,
             self.mock_start_time,
-            buffer
         )
-        self.assertIn("Available Instances", buffer.getvalue())
-        self.assertIn("test-instance", buffer.getvalue())
-        self.assertIn("test-instance-2", buffer.getvalue())
+        self.assertIn("Available Instances", mock_stdout.getvalue())
+        self.assertIn("test-instance", mock_stdout.getvalue())
+        self.assertIn("test-instance-2", mock_stdout.getvalue())
 
 
 class TestRenderToConsoleSwitching(unittest.TestCase):
@@ -102,7 +97,8 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
         )
 
     @patch('src.output.datetime')
-    def test_switching_availability_three_times(self, mock_datetime):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_switching_availability_three_times(self, mock_stdout, mock_datetime):
         mock_times = [datetime.datetime(2024, 1, 1, 1, minute, 0) for minute in range(12)]
         mock_datetime.now.side_effect = mock_times
 
@@ -122,7 +118,6 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                     instances,
                     last_available_time,
                     self.mock_start_time,
-                    buffer
                 )
             else:
                 duration_since_reference = current_time - (last_available_time if last_available_time is not None
@@ -137,11 +132,10 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                     {},
                     last_available_time,
                     self.mock_start_time,
-                    buffer
                 )
 
             # Check the buffer content after each switch
-            buffer_lines = buffer.getvalue().split('\r')
+            buffer_lines = mock_stdout.getvalue().split('\r')
             if len(buffer_lines) > 1:
                 # Get the last line; the first one is empty
                 actual_output = buffer_lines[-1].strip()
@@ -163,7 +157,8 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
         )
 
     @patch('src.output.datetime')
-    def test_switching_start_not_available(self, mock_datetime):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_switching_start_not_available(self, mock_stdout, mock_datetime):
         mock_times = [datetime.datetime(2024, 1, 1, 1, minute, 0) for minute in range(12)]
         mock_datetime.now.side_effect = mock_times
 
@@ -184,7 +179,6 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                     instances,
                     last_available_time,
                     self.mock_start_time,
-                    buffer
                 )
             else:
                 duration_since_reference = current_time - (self.mock_start_time if last_available_time is None else last_available_time)
@@ -196,11 +190,10 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                     {},
                     last_available_time,
                     self.mock_start_time,
-                    buffer
                 )
 
             # Check the buffer content after each switch
-            buffer_lines = buffer.getvalue().split('\r')
+            buffer_lines = mock_stdout.getvalue().split('\r')
             if len(buffer_lines) > 1:
                 # Get the last line; the first one is empty
                 actual_output = buffer_lines[-1].strip()
@@ -223,7 +216,8 @@ class TestRenderToConsoleNotAvailableUpdates(unittest.TestCase):
         )
 
     @patch('src.output.datetime')
-    def test_not_available_updates(self, mock_datetime):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_not_available_updates(self, mock_stdout, mock_datetime):
         # Create mock times with correct hour and minute values
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=10 * i) for i in range(10)]
         mock_datetime.now.side_effect = mock_times
@@ -242,11 +236,10 @@ class TestRenderToConsoleNotAvailableUpdates(unittest.TestCase):
                 {},
                 None,
                 self.mock_start_time,
-                buffer
             )
 
             # Check the buffer content after each update
-            buffer_lines = buffer.getvalue().split('\r')
+            buffer_lines = mock_stdout.getvalue().split('\r')
             if len(buffer_lines) > 1:
                 # Get the last line; the first one is empty
                 actual_output = buffer_lines[-1].strip()
@@ -284,7 +277,8 @@ class TestRenderToConsoleAvailableRandomUpdates(unittest.TestCase):
         }
 
     @patch('src.output.datetime')
-    def test_available_random_updates(self, mock_datetime):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_available_random_updates(self, mock_stdout, mock_datetime):
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=5 * i) for i in range(20)]
         mock_datetime.now.side_effect = mock_times
 
@@ -305,11 +299,10 @@ class TestRenderToConsoleAvailableRandomUpdates(unittest.TestCase):
                 instances_dict,
                 last_available_time,
                 self.mock_start_time,
-                buffer
             )
 
             # Check the buffer content after each update
-            buffer_lines = buffer.getvalue().split('\r')
+            buffer_lines = mock_stdout.getvalue().split('\r')
             if len(buffer_lines) > 1:
                 # Get the last line; the first one is empty
                 actual_output = buffer_lines[-1].strip()
