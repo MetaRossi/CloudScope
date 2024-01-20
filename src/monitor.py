@@ -1,70 +1,82 @@
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Tuple, Dict
 
 from pydantic import BaseModel, Field
 
-from src.data_structures.instance_type import InstanceType
-from src.data_structures.region import Region
+from src.data_structures import InstanceAvailability
 from src.lambda_api import fetch_instance_types
-from src.output import log_instance_info, render_to_console
+from src.output import render_to_console, log_instance_info
 
 
 class Monitor(BaseModel):
-    # Required fields
-    start_time: datetime = Field(frozen=True)
-    # Handled by code
-    available_instances: Dict[str, InstanceType] = Field(default_factory=dict)
-    last_available_time: Optional[datetime] = None
-    is_available: bool = False
+    """
+    Monitor class for tracking and logging the availability of cloud instances.
 
-    def poll(self, api_key: str) -> None:
-        new_available, data = fetch_instance_types(api_key)
-        previous_state = self.is_available
-        self.is_available = bool(new_available)
+    Attributes:
+        api_key (str): API key used to authenticate with the cloud service.
+        start_time (datetime): The time when the monitoring started.
+        available_instances (Dict[Tuple[str, str, str], InstanceAvailability]):
+            A dictionary mapping instance keys to their availability information.
+    """
 
-        # Update last_available_time only when transitioning from no available instances to some available instances
-        if self.is_available and not previous_state:
-            if self.last_available_time is None:
-                self.last_available_time = datetime.now()
+    api_key: str
+    start_time: datetime
+    available_instances: Dict[Tuple[str, str, str], InstanceAvailability] = Field(default_factory=dict)
 
-        # Process and compare the fetched data with the current state
-        for instance_name in new_available:
-            instance_data = data[instance_name]["instance_type"]
-            regions = [Region(**region) for region in data[instance_name]["regions_with_capacity_available"]]
+    def poll(self) -> None:
+        """
+        Polls the cloud service for current instance availability and updates
+        the monitoring information accordingly.
 
-            if instance_name not in self.available_instances:
-                # New instance available
-                self.available_instances[instance_name] = InstanceType(**instance_data,
-                                                                       regions_with_capacity_available=regions)
-                self.log_change(instance_name, regions, 'Available')
-            else:
-                # Check for changes in regions
-                available_regions = self.available_instances[instance_name].regions_with_capacity_available
-                current_regions = {region.name for region in available_regions}
-                new_regions = {region.name for region in regions}
+        This method performs the following actions:
+        1. Fetches the current instance types and their availability.
+        2. Updates the available instances map with the new information.
+        3. Logs information about new or removed instances.
+        4. Calls render_to_console to update the console output with the latest availability information.
+        """
+        # Fetch current instance availability from the cloud service
+        instance_types, new_instances = fetch_instance_types(self.api_key)
 
-                if current_regions != new_regions:
-                    self.available_instances[instance_name].regions_with_capacity_available = regions
-                    self.log_change(instance_name, regions, 'Updated')
+        # Determine newly available and no longer available instances
+        new_instance_keys = {instance.get_key() for instance in new_instances}
+        existing_instance_keys = set(self.available_instances.keys())
+        newly_available = new_instance_keys - existing_instance_keys
+        no_longer_available = existing_instance_keys - new_instance_keys
 
-        # Check for instances that are no longer available
-        for instance_name in list(self.available_instances):
-            if instance_name not in new_available:
-                available_regions = self.available_instances[instance_name].regions_with_capacity_available
-                self.log_change(instance_name, available_regions, 'Unavailable')
-                del self.available_instances[instance_name]
+        # Update available instances map with current information
+        for instance in new_instances:
+            key = instance.get_key()
+            # Update instance's last available time if it's newly available or already exists
+            if key in newly_available or key in existing_instance_keys:
+                instance.update(current_time=datetime.now())
+            self.available_instances[key] = instance
 
-        # Render to console with new information
-        if previous_state != self.is_available:
-            print()  # Start a new line on availability status change
-        render_to_console(
-            self.is_available,
-            self.available_instances,
-            self.last_available_time,
-            self.start_time
+        # Log information for instances that have become available or unavailable
+        for key in newly_available:
+            instance = self.available_instances[key]
+            log_instance_info(instance, "Available")
+        for key in no_longer_available:
+            instance = self.available_instances.pop(key)
+            if instance is not None:
+                log_instance_info(instance, "Unavailable")
+
+        # Determine if there's a change in the state of instance availability
+        state_change = bool(newly_available or no_longer_available)
+
+        # Add a new line to the console output if there is a state change
+        if state_change:
+            print()
+
+        # Determine the last time any instance was available for rendering to console
+        last_available_time = max(
+            (instance.last_time_available for instance in self.available_instances.values()),
+            default=self.start_time
         )
 
-    @staticmethod
-    def log_change(instance_type: str, regions: List[Region], status: str) -> None:
-        for region in regions:
-            log_instance_info(instance_type, region.name, status)
+        # Update console output with the latest availability information
+        render_to_console(
+            is_available=bool(self.available_instances),
+            instances=list(self.available_instances.values()),
+            last_available_time=last_available_time,
+            start_time=self.start_time,
+        )

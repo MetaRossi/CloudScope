@@ -1,53 +1,58 @@
-import logging
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional, List
+import logging
 
-from src.data_structures.instance_type import InstanceType
+from src.data_structures import InstanceAvailability
 
 
-def log_instance_info(instance_type: str, region_name: str, status: str, start_time: datetime = None) -> None:
-    # Log info of the instance type for a specific region
+def log_instance_info(
+    instance_availability: InstanceAvailability,
+    status: str
+) -> None:
     end_time = datetime.now()
 
-    if status == "Unavailable" and start_time is not None:
+    instance_info = instance_availability.instance_info
+    start_time = instance_availability.start_time
+
+    if status == "Unavailable":
         duration = end_time - start_time
         logging.info(
-            f"Instance Type: {instance_type}, Region: {region_name} - "
+            f"Instance Type: {instance_info.name}, Region: {instance_info.region} - "
             f"Status: {status} - "
             f"Start: {start_time} - "
             f"End: {end_time} - "
             f"Duration: {duration}"
         )
     elif status == "Available":
-        if start_time is None:
-            start_time = end_time
         duration = end_time - start_time
         logging.info(
-            f"Instance Type: {instance_type}, Region: {region_name} - "
+            f"Instance Type: {instance_info.name}, Region: {instance_info.region} - "
             f"Status: {status} - "
             f"Start: {start_time} - "
             f"Duration: {duration}"
         )
-    elif status == "Updated":
-        # TODO Should this even be passed in here? seems like no
-        pass
     else:
-        logging.error(f"Invalid status for Instance Type: {instance_type}, Region: {region_name} - Status: {status}")
+        logging.error(f"Invalid status for "
+                      f"Instance Type: {instance_info.name}, "
+                      f"Region: {instance_info.region} - "
+                      f"Status: {status} - "
+                      f"Start: {start_time} - "
+                      f"End: {end_time}")
 
 
 def render_to_console(
     is_available: bool,
-    instances: Dict[str, InstanceType],
+    instances: List[InstanceAvailability],
     last_available_time: Optional[datetime],
     start_time: datetime,
 ) -> None:
     current_time = datetime.now()
     if is_available:
-        available_instance_names = [instance.name for instance in instances.values()]
+        available_instance_names = [instance.instance_info.name for instance in instances]
         duration = current_time - (last_available_time or current_time)
         print(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
               f'Available Instances: {available_instance_names}, '
-              f'Availability Duration: {duration}')
+              f'Availability Duration: {duration}', end='')
     else:
         reference_time = last_available_time if last_available_time is not None else start_time
         duration_since_reference = current_time - reference_time
@@ -55,4 +60,4 @@ def render_to_console(
         print(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
               f'No instances available. '
               f'Last available at: {reference_time:%Y-%m-%d %H:%M:%S.%f}, '
-              f'Duration {duration_message}: {duration_since_reference}')
+              f'Duration {duration_message}: {duration_since_reference}', end='')
