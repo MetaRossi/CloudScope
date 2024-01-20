@@ -89,4 +89,4 @@ https://pydantic-docs.helpmanual.io/
 
 ## License
 
-TODO add MIT license
+MIT license. See the LICENSE file.
