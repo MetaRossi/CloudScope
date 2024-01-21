@@ -1,13 +1,14 @@
-from typing import Tuple, Set, Dict, Any, List
-import requests
 from datetime import datetime
+from typing import Tuple, Set, Dict, Any, List
 
-from src.data_structures import InstanceAvailability, InstanceInfo
+import requests
+
+from src.data_structures import InstanceAvailability, InstanceType
 
 
-def fetch_instance_types(api_key: str,
-                         api_endpoint: str = "https://cloud.lambdalabs.com/api/v1/instance-types"
-                         ) -> Tuple[Set[str], List[InstanceAvailability]]:
+def fetch_instance_availabilities(api_key: str,
+                                  api_endpoint: str = "https://cloud.lambdalabs.com/api/v1/instance-types"
+                                  ) -> List[InstanceAvailability]:
     """
     Fetches instance types from a given API endpoint using the provided API key.
 
@@ -35,33 +36,29 @@ def fetch_instance_types(api_key: str,
         response: requests.Response = requests.get(api_endpoint, headers=headers)
     except requests.exceptions.ConnectionError as e:
         print(f"Connection error: {e}")
-        return set(), []
+        return []
 
     if response.status_code == 200:
         data: Dict[str, Any] = response.json().get("data", {})
-        available_instances: Set[str] = set()
         instance_availability_list: List[InstanceAvailability] = []
-
+        fetch_time = datetime.now()
         for instance, details in data.items():
             if details.get("regions_with_capacity_available"):
-                available_instances.add(instance)
-
                 instance_info_data = details['instance_type']
                 for region in details['regions_with_capacity_available']:
-                    instance_info = InstanceInfo(
+                    instance_type = InstanceType(
                         name=instance_info_data['name'],
                         description=instance_info_data['description'],
                         region=region['name']
                     )
-                    current_time = datetime.now()
                     instance_availability = InstanceAvailability(
-                        instance_info=instance_info,
-                        start_time=current_time,
-                        last_seen_time=current_time
+                        instance_type=instance_type,
+                        start_time=fetch_time,
+                        last_seen_time=fetch_time
                     )
                     instance_availability_list.append(instance_availability)
 
-        return available_instances, instance_availability_list
+        return instance_availability_list
     else:
         print(f"Error: {response.status_code} - {response.text}")
-        return set(), []
+        return []
