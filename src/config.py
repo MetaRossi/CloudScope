@@ -42,6 +42,7 @@ class Config(BaseModel):
         super().__init__(**data)
         self.setup_logging()
 
+    # noinspection PyMethodParameters
     @field_validator('log_dir', mode='before')
     def check_log_dir_exists(cls, v: str) -> Path:
         """
@@ -71,7 +72,7 @@ class Config(BaseModel):
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-        print(f"Logging to: {self.log_file}")
+        print(f"{datetime.now():%Y-%m-%d %H:%M:%S.%f} - Logging to: {self.log_file}")
         logging.info(f"Starting job at: {self.start_time}")
         logging.info(f"Sleep Interval (ms): {self.sleep_interval_ms}")
 

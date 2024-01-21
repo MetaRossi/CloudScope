@@ -41,20 +41,39 @@ def render_to_console(
     is_available: bool,
     instances: List[InstanceAvailability],
     session_start_time: Optional[datetime],
+    session_end_time: Optional[datetime],
     start_time: datetime,
 ) -> None:
     current_time = datetime.now()
     if is_available:
         available_instance_names = set([instance.instance_type.name for instance in instances])
         duration = current_time - (session_start_time or current_time)
-        print(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
-              f'Available Instances: {available_instance_names}, '
-              f'Availability Duration: {duration}', end='')
+
+        output = f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '\
+                 f'Available Instances: {available_instance_names}, '\
+                 f'Availability Duration: {duration}'
+
+        print(output, end='')
     else:
-        reference_time = session_start_time if session_start_time is not None else start_time
+        # Determine the reference time and duration message
+        if session_start_time is not None:
+            reference_time = session_start_time
+            last_message = "Session started at"
+            duration_message = "since session start"
+        elif session_end_time is not None:
+            reference_time = session_end_time
+            last_message = "Last available at"
+            duration_message = "since last available"
+        else:
+            reference_time = start_time
+            last_message = "Started at"
+            duration_message = "since start"
+
         duration_since_reference = current_time - reference_time
-        duration_message = "since last available" if session_start_time is not None else "since start"
-        print(f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '
-              f'No instances available. '
-              f'Last available at: {reference_time:%Y-%m-%d %H:%M:%S.%f}, '
-              f'Duration {duration_message}: {duration_since_reference}', end='')
+
+        output = f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '\
+                 f'No instances available. '\
+                 f'{last_message}: {reference_time:%Y-%m-%d %H:%M:%S.%f}, '\
+                 f'Duration {duration_message}: {duration_since_reference}'
+
+        print(output, end='')

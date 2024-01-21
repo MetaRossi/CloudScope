@@ -22,8 +22,9 @@ class Monitor(BaseModel):
     api_key: str
     start_time: datetime
     current_availabilities: Dict[InstanceType, InstanceAvailability] = Field(default_factory=dict, repr=False)
-    is_first_poll: bool = Field(default=True, repr=False)
+    did_observe_instances: bool = Field(default=False, repr=False)
     session_start_time: Optional[datetime] = Field(default=None, repr=False)
+    session_end_time: Optional[datetime] = Field(default=None, repr=False)
 
     def poll(self) -> None:
         """
@@ -52,20 +53,18 @@ class Monitor(BaseModel):
         Monitor._log_instance_changes(new_availabilities, removed_availabilities)
 
         # Print a newline if there are any changes to the instance availability
-        if bool(new_availabilities or removed_availabilities) and not self.is_first_poll:
+        if bool(new_availabilities or removed_availabilities) and self.did_observe_instances:
             print()
 
-        # Set the session start time if it is not already set and there are available instances
-        if self.session_start_time is None and self.current_availabilities:
-            self.session_start_time = min(instance.start_time for instance in self.current_availabilities.values())
-        if not self.current_availabilities:
-            self.session_start_time = None
+        # Update the session start and end times
+        self.did_observe_instances, self.session_start_time, self.session_end_time = (
+            Monitor._update_time_state(self.did_observe_instances, bool(self.current_availabilities),
+                                       self.session_start_time, self.session_end_time, fetch_time)
+        )
 
         # Update the console output with the latest availability information
-        Monitor._render_console_output(self.current_availabilities, self.session_start_time, self.start_time)
-
-        # Set the first poll flag to false
-        self.is_first_poll = False
+        Monitor._render_console_output(self.current_availabilities,
+                                       self.session_start_time, self.session_end_time, self.start_time)
 
     @staticmethod
     def _analyze_availability(fetch_time: datetime,
@@ -112,8 +111,48 @@ class Monitor(BaseModel):
                 log_instance_info(instance, "Unavailable")
 
     @staticmethod
+    def _update_time_state(did_observe_instances: bool,
+                           current_availabilities: bool,
+                           session_start_time: Optional[datetime],
+                           session_end_time: Optional[datetime],
+                           fetch_time: datetime
+                           ) -> Tuple[bool, Optional[datetime], Optional[datetime]]:
+        # Update the session start and end times
+        if not did_observe_instances and not current_availabilities:
+            # No instances have been observed yet
+            session_start_time = None
+            session_end_time = None
+        elif session_start_time is None and current_availabilities:
+            # If this is the first time we've seen any availabilities for this session, set the session start time
+            session_start_time = fetch_time
+            session_end_time = None
+            # Set the did_observe_instances flag to True
+            did_observe_instances = True
+        elif session_end_time is None and not current_availabilities:
+            # If there are no availabilities, set the session end time
+            session_start_time = None
+            session_end_time = fetch_time
+        elif session_start_time is not None and current_availabilities:
+            # If there are availabilities, and we've already seen availabilities for this session,
+            pass
+        elif session_end_time is not None and not current_availabilities:
+            # If there are no availabilities, and we've already seen availabilities for this session,
+            pass
+        else:
+            logging.error("Invalid state for session start and end times. Variables:\n"
+                          "did_observe_instances: %s"
+                          "session_start_time: %s, "
+                          "session_end_time: %s, "
+                          "start_time: %s"
+                          "current_availabilities: %s"
+                          )
+
+        return did_observe_instances, session_start_time, session_end_time
+
+    @staticmethod
     def _render_console_output(availabilities: Dict[InstanceType, InstanceAvailability],
-                               session_start: Optional[datetime],
+                               session_start_time: Optional[datetime],
+                               session_end_time: Optional[datetime],
                                start_time: datetime
                                ) -> None:
         """
@@ -122,6 +161,7 @@ class Monitor(BaseModel):
         render_to_console(
             is_available=bool(availabilities),
             instances=list(availabilities.values()),
-            session_start_time=session_start,
+            session_start_time=session_start_time,
+            session_end_time=session_end_time,
             start_time=start_time,
         )

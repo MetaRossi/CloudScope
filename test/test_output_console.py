@@ -12,7 +12,8 @@ from test.helpers import helper_assert_and_print
 class TestRenderToConsole(unittest.TestCase):
     def setUp(self):
         self.mock_start_time = datetime.datetime(2024, 1, 1, 0, 0, 0)
-        self.mock_last_available_time = datetime.datetime(2024, 1, 1, 1, 0, 0)
+        self.mock_session_start_time = datetime.datetime(2024, 1, 1, 1, 0, 0)
+        self.mock_session_end_time = datetime.datetime(2024, 1, 1, 2, 0, 0)
         self.mock_instance_type = InstanceType(
             name="test-instance",
             description="A test instance",
@@ -29,7 +30,8 @@ class TestRenderToConsole(unittest.TestCase):
         render_to_console(
             True,
             [self.mock_instance],
-            self.mock_last_available_time,
+            self.mock_session_start_time,
+            None,
             self.mock_start_time,
         )
         self.assertIn("Available Instances", mock_stdout.getvalue())
@@ -39,6 +41,7 @@ class TestRenderToConsole(unittest.TestCase):
         render_to_console(
             False,
             [],
+            None,
             None,
             self.mock_start_time,
         )
@@ -50,7 +53,8 @@ class TestRenderToConsole(unittest.TestCase):
         render_to_console(
             False,
             [],
-            self.mock_last_available_time,
+            None,
+            self.mock_session_end_time,
             self.mock_start_time,
         )
         self.assertIn("No instances available", mock_stdout.getvalue())
@@ -62,6 +66,7 @@ class TestRenderToConsole(unittest.TestCase):
         render_to_console(
             False,
             [],
+            None,
             long_last_available_time,
             self.mock_start_time,
         )
@@ -83,7 +88,8 @@ class TestRenderToConsole(unittest.TestCase):
         render_to_console(
             True,
             [self.mock_instance, mock_instance2],
-            self.mock_last_available_time,
+            self.mock_session_start_time,
+            None,
             self.mock_start_time,
         )
         self.assertIn("Available Instances", mock_stdout.getvalue())
@@ -102,11 +108,12 @@ class TestRenderToConsole(unittest.TestCase):
             duration_since_start = current_time - self.mock_start_time
             expected_output = (f"\r{current_time:%Y-%m-%d %H:%M:%S.%f} - "
                                f"No instances available. "
-                               f"Last available at: {start_time_str}, "
+                               f"Started at: {start_time_str}, "
                                f"Duration since start: {duration_since_start}")
             render_to_console(
                 False,
                 [],
+                None,
                 None,
                 self.mock_start_time,
             )
@@ -120,7 +127,6 @@ class TestRenderToConsole(unittest.TestCase):
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=5 * i) for i in range(5)]
         mock_datetime.now.side_effect = mock_times
 
-        start_time_str = f"{self.mock_start_time:%Y-%m-%d %H:%M:%S.%f}"
         for i in range(5):
             current_time = mock_times[i]
             duration_since_start = current_time - self.mock_start_time
@@ -131,6 +137,7 @@ class TestRenderToConsole(unittest.TestCase):
                 True,
                 [self.mock_instance],
                 self.mock_start_time,
+                None,
                 self.mock_start_time,
             )
 
@@ -172,6 +179,7 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                     True,
                     instances,
                     last_available_time,
+                    None,
                     self.mock_start_time,
                 )
             else:
@@ -185,6 +193,7 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                 render_to_console(
                     False,
                     [],
+                    None,
                     last_available_time,
                     self.mock_start_time,
                 )
@@ -227,17 +236,23 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                     True,
                     instances,
                     last_available_time,
+                    None,
                     self.mock_start_time,
                 )
             else:
+                last_message = "Started at" if last_available_time is None else "Last available at"
                 duration_since_reference = current_time - (
                     self.mock_start_time if last_available_time is None else last_available_time)
                 duration_message = "since start" if last_available_time is None else "since last available"
-                last_available_time_str = f"{last_available_time:%Y-%m-%d %H:%M:%S.%f}" if last_available_time is not None else start_time_str
-                expected_output = f"\r{current_time:%Y-%m-%d %H:%M:%S.%f} - No instances available. Last available at: {last_available_time_str}, Duration {duration_message}: {duration_since_reference}"
+                last_available_time_str = f"{last_available_time:%Y-%m-%d %H:%M:%S.%f}" \
+                    if last_available_time is not None else start_time_str
+                expected_output = (f"\r{current_time:%Y-%m-%d %H:%M:%S.%f} - No instances available. "
+                                   f"{last_message}: {last_available_time_str}, "
+                                   f"Duration {duration_message}: {duration_since_reference}")
                 render_to_console(
                     False,
                     [],
+                    None,
                     last_available_time,
                     self.mock_start_time,
                 )
@@ -261,11 +276,12 @@ class TestRenderToConsoleNotAvailableUpdates(unittest.TestCase):
             duration_since_start = current_time - self.mock_start_time
             expected_output = (f"\r{current_time:%Y-%m-%d %H:%M:%S.%f} - "
                                f"No instances available. "
-                               f"Last available at: {start_time_str}, "
+                               f"Started at: {start_time_str}, "
                                f"Duration since start: {duration_since_start}")
             render_to_console(
                 False,
                 [],
+                None,
                 None,
                 self.mock_start_time,
             )
@@ -314,6 +330,7 @@ class TestRenderToConsoleAvailableRandomUpdates(unittest.TestCase):
                 True,
                 available_instances,
                 last_available_time,
+                None,
                 self.mock_start_time,
             )
 
