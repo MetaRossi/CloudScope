@@ -97,7 +97,7 @@ https://pydantic-docs.helpmanual.io/
 
 MIT license. See the LICENSE file.
 
-## Acknowledgements
+## 🤖 Acknowledgements
 
 This project received assistance from OpenAI's ChatGPT for various tasks including: 
 code snippets, unit tests, generating the header image, and documentation.
