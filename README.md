@@ -1,6 +1,6 @@
-# Lambda Labs Availability Monitor
+# 🌐 Lambda Labs Availability Monitor
 
-## Overview
+## 📜 Overview
 
 This application monitors the availability of cloud instances using a configurable interval.
 It sends requests to the Lambda Labs API to fetch instance availability information.
@@ -18,13 +18,13 @@ If you are not familiar with Pydantic, the code will look weird.
 You can find more information here:
 https://pydantic-docs.helpmanual.io/
 
-## Requirements
+## 📋 Requirements
 
 - Python 3.12 (Although it may work with older versions)
 - Pip
 - Pipenv
 
-## Setup 
+## 🛠️ Setup 
 
 1. **Clone the Repository**
    - Clone the repository to your local machine:
@@ -54,7 +54,7 @@ https://pydantic-docs.helpmanual.io/
    - Once you have an account, you can get an API key here: https://cloud.lambdalabs.com/api-keys
    - You will need the API key to configure the application.
 
-## Configuration
+## ⚙️ Configuration
 
 1. **TOML Configuration File**
    - Create a TOML configuration file in the location of your choosing (e.g., `config.toml`) 
@@ -72,7 +72,7 @@ https://pydantic-docs.helpmanual.io/
 2. **Logging Directory**
    - If the logging directory does not exist, it will be created when the application is run.
 
-## Usage
+## 🚀 Usage
 
 1. **Run the Application**
    - Execute the main script with the configuration file and the namespace:
@@ -91,6 +91,6 @@ https://pydantic-docs.helpmanual.io/
    - `namespace`: Required. Specifies the namespace within the configuration file.
    - `--help`: Optional. Displays the help message.
 
-## License
+## ⚖️ License
 
 MIT license. See the LICENSE file.
