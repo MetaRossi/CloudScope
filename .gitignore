@@ -1,9 +1,12 @@
-/__config/
-/__local/
-/__logs/
-.idea/
-*.pyc
+# Local files
+__config/
+__local/
+__logs/
 __scratch*
 
-# Ignore the suggested config file name in case a user places it in the root of the repo
+# Files for IDE and compiler
+.idea/
+*.pyc
+
+# Ignore the config file name suggested in the README in case a user places it in the root of the repo
 config.toml
