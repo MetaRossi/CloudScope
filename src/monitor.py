@@ -1,5 +1,4 @@
 import logging
-import time
 from datetime import datetime
 from typing import Tuple, Dict, Optional
 
@@ -53,10 +52,6 @@ class Monitor(BaseModel):
         # Log information for instances that have become available or unavailable
         Monitor._log_instance_changes(new_availabilities, removed_availabilities)
 
-        # Print a newline if there are any changes to the instance availability
-        if bool(new_availabilities or removed_availabilities) and self.did_observe_instances:
-            print()
-
         # Update the session start and end times
         self.did_observe_instances, self.session_start_time, self.session_end_time = (
             Monitor._update_time_state(self.did_observe_instances, bool(self.current_availabilities),
@@ -65,7 +60,10 @@ class Monitor(BaseModel):
 
         # Update the console output with the latest availability information
         Monitor._render_console_output(self.current_availabilities,
-                                       self.session_start_time, self.session_end_time, self.start_time)
+                                       self.session_start_time, self.session_end_time, self.start_time,
+                                       # Only needed for new line detection
+                                       bool(new_availabilities), bool(removed_availabilities),
+                                       self.did_observe_instances)
 
     @staticmethod
     def _analyze_availability(fetch_time: datetime,
@@ -154,11 +152,20 @@ class Monitor(BaseModel):
     def _render_console_output(availabilities: Dict[InstanceType, InstanceAvailability],
                                session_start_time: Optional[datetime],
                                session_end_time: Optional[datetime],
-                               start_time: datetime
+                               start_time: datetime,
+                               new_availabilities: bool,
+                               removed_availabilities: bool,
+                               did_observe_instances: bool,
                                ) -> None:
         """
         Updates console output with the latest availability information.
         """
+        # Print a newline if there are any changes to the instance availability
+        # Prevent printing a newline on the first poll with did_observe_instances
+        if (new_availabilities or removed_availabilities) and did_observe_instances:
+            print()
+
+        # Render the console output
         render_to_console(
             is_available=bool(availabilities),
             instances=list(availabilities.values()),
