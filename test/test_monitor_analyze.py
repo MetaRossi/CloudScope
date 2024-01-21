@@ -1,7 +1,7 @@
+import random
 import unittest
 from datetime import datetime, timedelta
-import random
-from typing import Dict
+
 from src.data_structures import InstanceType, InstanceAvailability
 from src.monitor import Monitor
 
