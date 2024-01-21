@@ -15,7 +15,7 @@ class Config(BaseModel):
     its fields cannot be modified.
 
     Attributes:
-        sleep_interval_ms (int): The sleep interval in milliseconds.
+        min_poll_delay (int): The minimum delay between API requests in milliseconds.
         log_dir (Path): The directory path for logs.
         start_time (str): The start time in ISO 8601 format.
         api_key (str): The API key.
@@ -24,7 +24,7 @@ class Config(BaseModel):
         check_log_dir_exists: A field validator for 'log_dir' to ensure the log directory exists.
     """
 
-    sleep_interval_ms: int
+    min_poll_delay: int
     log_dir: Path = Field(...)
     start_time: str = Field(default_factory=lambda: datetime.now().isoformat(timespec='seconds'))
     log_file: Path = Field(default_factory=lambda: Path(datetime.now().strftime("%Y%m%d_%H%M%S.log")))
@@ -74,5 +74,5 @@ class Config(BaseModel):
 
         print(f"{datetime.now():%Y-%m-%d %H:%M:%S.%f} - Logging to: {self.log_file}")
         logging.info(f"Starting job at: {self.start_time}")
-        logging.info(f"Sleep Interval (ms): {self.sleep_interval_ms}")
+        logging.info(f"Target sleep Interval (ms): {self.min_poll_delay}")
 

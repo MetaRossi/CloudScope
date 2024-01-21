@@ -5,5 +5,5 @@
 *.pyc
 __scratch*
 
-# Ignore the config file in case a user places it in the root of the repo
+# Ignore the suggested config file name in case a user places it in the root of the repo
 config.toml

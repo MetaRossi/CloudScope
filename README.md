@@ -63,11 +63,11 @@ https://pydantic-docs.helpmanual.io/
      with the following structure:
      ```toml
      [default]
-     api_key = "your_api_key_here"
-     sleep_interval_ms = 1000
+     min_poll_delay = 1100
      log_dir = "__logs"
+     api_key = "your_api_key_here"
      ```
-   - Adjust the `api_key`, `sleep_interval_ms`, and `log_dir` as per your requirements.
+   - Adjust the `min_poll_delay` and `log_dir` as per your preferences.
    - Lambda Labs will rate limit requests to the API if polled at less than one request per second.
      If this occurs, you will see HTML in the console output.
 
@@ -99,5 +99,5 @@ MIT license. See the LICENSE file.
 
 ## 🤖 Acknowledgements
 
-This project received assistance from OpenAI's ChatGPT for various tasks including: 
+This project received assistance from OpenAI's ChatGPT and GitHub Copilot for various tasks including: 
 code snippets, unit tests, generating the header image, and documentation.
