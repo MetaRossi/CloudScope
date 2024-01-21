@@ -53,15 +53,15 @@ class Monitor(BaseModel):
         # Log information for instances that have become available or unavailable
         Monitor._log_instance_changes(new_availabilities, removed_availabilities)
 
-        # Print a newline if there are any changes to the instance availability
-        if bool(new_availabilities or removed_availabilities) and self.did_observe_instances:
-            print()
-
         # Update the session start and end times
         self.did_observe_instances, self.session_start_time, self.session_end_time = (
             Monitor._update_time_state(self.did_observe_instances, bool(self.current_availabilities),
                                        self.session_start_time, self.session_end_time, fetch_time)
         )
+
+        # Print a newline if there are any changes to the instance availability
+        if bool(new_availabilities or removed_availabilities) and self.did_observe_instances:
+            print()
 
         # Update the console output with the latest availability information
         Monitor._render_console_output(self.current_availabilities,
