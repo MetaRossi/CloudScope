@@ -25,6 +25,7 @@ class Monitor(BaseModel):
     did_observe_instances: bool = Field(default=False, repr=False)
     session_start_time: Optional[datetime] = Field(default=None, repr=False)
     session_end_time: Optional[datetime] = Field(default=None, repr=False)
+    is_first_poll: bool = Field(default=True, repr=False)
 
     def poll(self) -> None:
         """
@@ -63,7 +64,10 @@ class Monitor(BaseModel):
                                        self.session_start_time, self.session_end_time, self.start_time,
                                        # Only needed for new line detection
                                        bool(new_availabilities), bool(removed_availabilities),
-                                       self.did_observe_instances)
+                                       self.did_observe_instances, self.is_first_poll)
+
+        # Set the is_first_poll flag to False
+        self.is_first_poll = False
 
     @staticmethod
     def _analyze_availability(fetch_time: datetime,
@@ -156,13 +160,15 @@ class Monitor(BaseModel):
                                new_availabilities: bool,
                                removed_availabilities: bool,
                                did_observe_instances: bool,
+                               is_first_poll: bool
                                ) -> None:
         """
         Updates console output with the latest availability information.
         """
         # Print a newline if there are any changes to the instance availability
         # Prevent printing a newline on the first poll with did_observe_instances
-        if (new_availabilities or removed_availabilities) and did_observe_instances:
+        # TODO move into render_to_console
+        if (new_availabilities or removed_availabilities) and did_observe_instances and not is_first_poll:
             print()
 
         # Render the console output
