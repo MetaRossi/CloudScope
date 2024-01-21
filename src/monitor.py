@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime
 from typing import Tuple, Dict, Optional
 
@@ -133,10 +134,10 @@ class Monitor(BaseModel):
             session_start_time = None
             session_end_time = fetch_time
         elif session_start_time is not None and current_availabilities:
-            # If there are availabilities, and we've already seen availabilities for this session,
+            # If there are availabilities, and we've already seen availabilities for this session
             pass
         elif session_end_time is not None and not current_availabilities:
-            # If there are no availabilities, and we've already seen availabilities for this session,
+            # If there are no availabilities, and we've already seen availabilities for this session
             pass
         else:
             logging.error("Invalid state for session start and end times. Variables:\n"

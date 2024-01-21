@@ -1,8 +1,11 @@
 import argparse
+import logging
 import time
+from datetime import datetime
 
 import toml
 
+from src.api_throttle import APIThrottle
 from src.config import Config
 from src.monitor import Monitor
 
@@ -33,8 +36,10 @@ if __name__ == "__main__":
     # Create an instance of the Monitor class
     monitor = Monitor(api_key=config.api_key, start_time=config.start_time)
 
-    # Start monitoring instance availability
+    # Create an instance of the APIThrottle class
+    api_throttle = APIThrottle(request_interval_ms=config.min_poll_delay)
+
+    # Start monitoring instance availability with wait intervals
     while True:
         monitor.poll()
-        # Sleep for the configured interval in ms
-        time.sleep(config.sleep_interval_ms / 1000)
+        api_throttle.wait_for_next_request()
