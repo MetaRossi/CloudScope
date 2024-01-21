@@ -1,5 +1,7 @@
 # 🌐 Lambda Labs Availability Monitor
 
+![Lambda Labs Availability](resource/image/LambdaLabsAvailability.png)
+
 ## 📜 Overview
 
 This application monitors the availability of cloud instances using a configurable interval.
@@ -94,3 +96,8 @@ https://pydantic-docs.helpmanual.io/
 ## ⚖️ License
 
 MIT license. See the LICENSE file.
+
+## Acknowledgements
+
+This project received assistance from OpenAI's ChatGPT for various tasks including: 
+code snippets, unit tests, generating the header image, and documentation.
