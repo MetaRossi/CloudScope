@@ -1,13 +1,15 @@
-from typing import Tuple, Set, Dict, Any, List
-import requests
+import logging
 from datetime import datetime
+from typing import Tuple, Dict, Any, List, Optional
 
-from src.data_structures import InstanceAvailability, InstanceInfo
+import requests
+
+from src.data_structures import InstanceAvailability, InstanceType
 
 
-def fetch_instance_types(api_key: str,
-                         api_endpoint: str = "https://cloud.lambdalabs.com/api/v1/instance-types"
-                         ) -> Tuple[Set[str], List[InstanceAvailability]]:
+def fetch_instance_availabilities(api_key: str,
+                                  api_endpoint: str = "https://cloud.lambdalabs.com/api/v1/instance-types"
+                                  ) -> Tuple[Optional[datetime], List[InstanceAvailability]]:
     """
     Fetches instance types from a given API endpoint using the provided API key.
 
@@ -20,10 +22,11 @@ def fetch_instance_types(api_key: str,
         api_endpoint (str): The URL of the API endpoint to fetch instance types from.
 
     Returns:
-        Tuple[Set[str], List[InstanceAvailability]]: A tuple containing two elements:
-            - A set of instance type strings that have capacity available.
-            - A list of InstanceAvailability objects representing each instance type
-              and its availability in different regions.
+        Tuple[Optional[datetime], List[InstanceAvailability]]: A tuple containing the
+        time the request was made and a list of InstanceAvailability objects. If the
+        request fails, the function returns None and an empty list. If the request
+        succeeds but the response is not valid JSON, the function returns the time
+        the request was made and an empty list.
 
     The function handles connection errors by printing an error message and returning
     an empty set and list. Other HTTP errors are logged with their status codes
@@ -35,33 +38,32 @@ def fetch_instance_types(api_key: str,
         response: requests.Response = requests.get(api_endpoint, headers=headers)
     except requests.exceptions.ConnectionError as e:
         print(f"Connection error: {e}")
-        return set(), []
+        logging.error(f"Connection error: {e}")
+        return None, []
+
+    fetch_time = datetime.now()
 
     if response.status_code == 200:
         data: Dict[str, Any] = response.json().get("data", {})
-        available_instances: Set[str] = set()
         instance_availability_list: List[InstanceAvailability] = []
-
         for instance, details in data.items():
             if details.get("regions_with_capacity_available"):
-                available_instances.add(instance)
-
                 instance_info_data = details['instance_type']
                 for region in details['regions_with_capacity_available']:
-                    instance_info = InstanceInfo(
+                    instance_type = InstanceType(
                         name=instance_info_data['name'],
                         description=instance_info_data['description'],
                         region=region['name']
                     )
-                    current_time = datetime.now()
                     instance_availability = InstanceAvailability(
-                        instance_info=instance_info,
-                        start_time=current_time,
-                        last_seen_time=current_time
+                        instance_type=instance_type,
+                        start_time=fetch_time,
+                        last_seen_time=fetch_time
                     )
                     instance_availability_list.append(instance_availability)
 
-        return available_instances, instance_availability_list
+        return fetch_time, instance_availability_list
     else:
         print(f"Error: {response.status_code} - {response.text}")
-        return set(), []
+        logging.error(f"Error: {response.status_code} - {response.text}")
+        return None, []
