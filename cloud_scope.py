@@ -8,7 +8,12 @@ from src.monitor import Monitor
 
 if __name__ == "__main__":
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Run the application with specified configuration.")
+    parser = argparse.ArgumentParser(description="""
+    Monitors the availability of Lambda Labs' cloud instances 
+    with customizable monitoring for specific instance types and regions. 
+    Features configurable alerts via email or email-to-text for newly available instances. 
+    Additionally, it can launch new instances upon availability and execute predefined scripts.
+    """)
     parser.add_argument("config_file", help="Path to the configuration file.")
     parser.add_argument("namespace", help="TOML configuration namespace.")
     args = parser.parse_args()
@@ -31,10 +36,10 @@ if __name__ == "__main__":
     config = Config(**namespace_config)
 
     # Create an instance of the Monitor class
-    monitor = Monitor(api_key=config.api_key, start_time=config.start_time)
+    monitor = Monitor(config=config)
 
     # Create an instance of the APIThrottle class
-    api_throttle = APIThrottle(request_interval_ms=config.min_poll_delay)
+    api_throttle = APIThrottle(request_interval_ms=config.min_poll_delay_ms)
 
     # Start monitoring instance availability with wait intervals
     while True:
