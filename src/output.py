@@ -39,14 +39,14 @@ def log_instance_info(
 
 def render_to_console(
     is_available: bool,
-    instances: List[InstanceAvailability],
+    instances: List[str],
     session_start_time: Optional[datetime],
     session_end_time: Optional[datetime],
     start_time: datetime,
 ) -> None:
     current_time = datetime.now()
     if is_available:
-        available_instance_names = set([instance.instance_type.name for instance in instances])
+        available_instance_names = set([instance for instance in instances])
         duration = current_time - (session_start_time or current_time)
 
         output = f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - '\

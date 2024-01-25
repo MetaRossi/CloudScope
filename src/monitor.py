@@ -1,12 +1,18 @@
 import logging
+import os
 from datetime import datetime
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, Set, List
 
 from pydantic import BaseModel, Field
 
+from src import lambda_api
+from src.config import Config
 from src.data_structures import InstanceAvailability, InstanceType
 from src.lambda_api import fetch_instance_availabilities
 from src.output import render_to_console, log_instance_info
+
+
+# TODO alert if a new region is observed; not one in the lambda API region dict
 
 
 class Monitor(BaseModel):
@@ -14,13 +20,13 @@ class Monitor(BaseModel):
     Monitor class for tracking and logging the availability of cloud instances.
 
     Attributes:
-        api_key (str): API key used to authenticate with the cloud service.
-        start_time (datetime): The time when the monitoring started.
+        config (Config): The application configuration.
         current_availabilities (Dict[Tuple[str, str, str], InstanceAvailability]):
             A dictionary mapping instance keys to their availability information.
     """
-    api_key: str
-    start_time: datetime
+    # Required fields
+    config: Config
+    # Handled in code
     current_availabilities: Dict[InstanceType, InstanceAvailability] = Field(default_factory=dict, repr=False)
     did_observe_instances: bool = Field(default=False, repr=False)
     session_start_time: Optional[datetime] = Field(default=None, repr=False)
@@ -33,7 +39,7 @@ class Monitor(BaseModel):
         the monitoring information accordingly.
         """
         # Fetch instance availability data from the API
-        fetch_time, fetched_availabilities_list = fetch_instance_availabilities(self.api_key)
+        fetch_time, fetched_availabilities_list = fetch_instance_availabilities(self.config.api_key)
         # Make a dictionary mapping instance keys to their availability information
         fetched_availabilities = {instance.instance_type: instance for instance in fetched_availabilities_list}
 
@@ -59,15 +65,83 @@ class Monitor(BaseModel):
                                        self.session_start_time, self.session_end_time, fetch_time)
         )
 
+        # Analyze the availability names
+        new_availability_names, current_availability_names, removed_availability_names = (
+            Monitor._analyze_availability_names(fetched_availabilities, self.current_availabilities))
+
         # Update the console output with the latest availability information
-        Monitor._render_console_output(self.current_availabilities,
-                                       self.session_start_time, self.session_end_time, self.start_time,
+        Monitor._render_console_output(current_availability_names,
+                                       self.session_start_time, self.session_end_time, self.config.start_time,
                                        # Only needed for new line detection
-                                       bool(new_availabilities), bool(removed_availabilities),
+                                       bool(new_availability_names), bool(removed_availability_names),
                                        self.did_observe_instances, self.is_first_poll)
 
         # Set the is_first_poll flag to False
         self.is_first_poll = False
+
+        # Log when a region not in the config.static_regions_dict is observed
+        # When a new region is observed, it is added to the config.new_logged_regions set to prevent logging it again
+        Monitor._detect_new_regions(self.current_availabilities,
+                                    self.config.new_logged_regions,
+                                    self.config.enable_voice_notifications)
+
+    @staticmethod
+    def _render_console_output(availability_names: List[str],
+                               session_start_time: Optional[datetime],
+                               session_end_time: Optional[datetime],
+                               start_time: datetime,
+                               new_availabilities: bool,
+                               removed_availabilities: bool,
+                               did_observe_instances: bool,
+                               is_first_poll: bool
+                               ) -> None:
+        """
+        Updates console output with the latest availability information.
+        """
+        # Print a newline if there are any changes to the instance availability
+        # Prevent printing a newline on the first poll with did_observe_instances
+        # TODO move into render_to_console
+        if (new_availabilities or removed_availabilities) and did_observe_instances and not is_first_poll:
+            print()
+
+        # Render the console output
+        render_to_console(
+            is_available=bool(availability_names),
+            instances=list(availability_names),
+            session_start_time=session_start_time,
+            session_end_time=session_end_time,
+            start_time=start_time,
+        )
+
+    @staticmethod
+    def _analyze_availability_names(fetched_availabilities: Dict[InstanceType, InstanceAvailability],
+                                    current_availabilities: Dict[InstanceType, InstanceAvailability]
+                                    ) -> Tuple[List[str],
+                                               List[str],
+                                               List[str]]:
+        # Lists for new, updated, and removed availability names
+        new_availability_names: List[str] = []
+        removed_availability_names: List[str] = []
+
+        # Just the names of the availabilities
+        fetched_availability_names = [instance.instance_type.name for instance in fetched_availabilities.values()]
+        current_availability_names = [instance.instance_type.name for instance in current_availabilities.values()]
+
+        # Find new availability names
+        for fetched_availability_name in fetched_availability_names:
+            if fetched_availability_name not in current_availability_names:
+                new_availability_names.append(fetched_availability_name)
+
+        # Find removed availability names
+        for current_availability_name in current_availability_names:
+            if current_availability_name not in fetched_availability_names:
+                removed_availability_names.append(current_availability_name)
+
+        # Make list of current availability names
+        # This overrides the list of current availability names from the input
+        current_availability_names = fetched_availability_names
+
+        return new_availability_names, current_availability_names, removed_availability_names
 
     @staticmethod
     def _analyze_availability(fetch_time: datetime,
@@ -153,29 +227,29 @@ class Monitor(BaseModel):
         return did_observe_instances, session_start_time, session_end_time
 
     @staticmethod
-    def _render_console_output(availabilities: Dict[InstanceType, InstanceAvailability],
-                               session_start_time: Optional[datetime],
-                               session_end_time: Optional[datetime],
-                               start_time: datetime,
-                               new_availabilities: bool,
-                               removed_availabilities: bool,
-                               did_observe_instances: bool,
-                               is_first_poll: bool
-                               ) -> None:
+    def _detect_new_regions(availabilities: Dict[InstanceType, InstanceAvailability],
+                            new_logged_regions: Set[str],
+                            enable_voice_notifications: bool
+                            ) -> None:
         """
-        Updates console output with the latest availability information.
+        Detects when a region not in the config.static_regions_dict is observed.
         """
-        # Print a newline if there are any changes to the instance availability
-        # Prevent printing a newline on the first poll with did_observe_instances
-        # TODO move into render_to_console
-        if (new_availabilities or removed_availabilities) and did_observe_instances and not is_first_poll:
-            print()
+        # Get the static regions from the config
+        known_regions = set(lambda_api.static_dict_of_known_regions().keys())
+        # Get the current available regions from the InstanceType in availabilities
+        current_available_regions = set([instance.region for instance in availabilities.keys()])
 
-        # Render the console output
-        render_to_console(
-            is_available=bool(availabilities),
-            instances=list(availabilities.values()),
-            session_start_time=session_start_time,
-            session_end_time=session_end_time,
-            start_time=start_time,
-        )
+        # Get the new regions
+        new_regions = current_available_regions - known_regions
+
+        # Log the new regions
+        for region in new_regions:
+            if region not in new_logged_regions:
+                logging.critical(f"New region observed: {region}")
+                print(f"""{Config.now_formatted_str()} - New region observed: {region}""")
+                if enable_voice_notifications:
+                    os.system('say "New Region Detected"')
+                # TODO send an email alert; this should not occur often
+
+        # Prevent logging the same new regions multiple times
+        new_logged_regions.update(new_regions)

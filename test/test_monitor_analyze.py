@@ -1,34 +1,16 @@
 import random
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from src.data_structures import InstanceType, InstanceAvailability
+from src.data_structures import InstanceAvailability
 from src.monitor import Monitor
-
-
-def random_instance_type() -> InstanceType:
-    return InstanceType(
-        name=f"Type_{random.randint(1, 10000)}",
-        description="Random Description",
-        region=f"Region_{random.randint(1, 10000)}"
-    )
-
-
-def random_availability() -> InstanceAvailability:
-    instance_type = random_instance_type()
-    start_time = datetime.now() - timedelta(days=random.randint(0, 5))
-    last_time_available = start_time + timedelta(hours=random.randint(1, 24))
-    return InstanceAvailability(
-        instance_type=instance_type,
-        start_time=start_time,
-        last_time_available=last_time_available
-    )
+from test.generators import availability_generator, instance_type_generator
 
 
 class TestAnalyzeAvailability(unittest.TestCase):
     def test_analyze_availability(self):
         for _ in range(20):
-            all_instances = [random_availability() for _ in range(30)]
+            all_instances = [availability_generator() for _ in range(30)]
 
             fetch_time = datetime.now()
             current_availabilities = {inst.instance_type: inst for inst in random.sample(all_instances,
@@ -62,7 +44,7 @@ class TestAnalyzeAvailabilityWithDistinctSets(unittest.TestCase):
         # Generate unique InstanceTypes
         unique_instance_types = set()
         while len(unique_instance_types) < 1000:
-            inst_type = random_instance_type()
+            inst_type = instance_type_generator()
             if inst_type not in unique_instance_types:
                 unique_instance_types.add(inst_type)
 
