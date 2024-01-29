@@ -86,7 +86,7 @@ class Monitor(BaseModel):
                                     self.config.enable_voice_notifications)
 
     @staticmethod
-    def _render_console_output(availability_names: List[str],
+    def _render_console_output(availability_names: Set[str],
                                session_start_time: Optional[datetime],
                                session_end_time: Optional[datetime],
                                start_time: datetime,
@@ -107,7 +107,7 @@ class Monitor(BaseModel):
         # Render the console output
         render_to_console(
             is_available=bool(availability_names),
-            instances=list(availability_names),
+            instance_names=availability_names,
             session_start_time=session_start_time,
             session_end_time=session_end_time,
             start_time=start_time,
@@ -116,12 +116,12 @@ class Monitor(BaseModel):
     @staticmethod
     def _analyze_availability_names(fetched_availabilities: Dict[InstanceType, InstanceAvailability],
                                     current_availabilities: Dict[InstanceType, InstanceAvailability]
-                                    ) -> Tuple[List[str],
-                                               List[str],
-                                               List[str]]:
+                                    ) -> Tuple[Set[str],
+                                               Set[str],
+                                               Set[str]]:
         # Lists for new, updated, and removed availability names
-        new_availability_names: List[str] = []
-        removed_availability_names: List[str] = []
+        new_availability_names: Set[str] = set()
+        removed_availability_names: Set[str] = set()
 
         # Just the names of the availabilities
         fetched_availability_names = [instance.instance_type.name for instance in fetched_availabilities.values()]
@@ -130,16 +130,16 @@ class Monitor(BaseModel):
         # Find new availability names
         for fetched_availability_name in fetched_availability_names:
             if fetched_availability_name not in current_availability_names:
-                new_availability_names.append(fetched_availability_name)
+                new_availability_names.add(fetched_availability_name)
 
         # Find removed availability names
         for current_availability_name in current_availability_names:
             if current_availability_name not in fetched_availability_names:
-                removed_availability_names.append(current_availability_name)
+                removed_availability_names.add(current_availability_name)
 
         # Make list of current availability names
         # This overrides the list of current availability names from the input
-        current_availability_names = fetched_availability_names
+        current_availability_names = set(fetched_availability_names)
 
         return new_availability_names, current_availability_names, removed_availability_names
 
