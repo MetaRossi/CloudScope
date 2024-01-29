@@ -4,9 +4,9 @@ import unittest
 from io import StringIO
 from unittest.mock import patch
 
+from helpers import helper_assert_and_print
 from src.data_structures import InstanceAvailability, InstanceType
-from src.output import render_to_console
-from test.helpers import helper_assert_and_print
+from src.output_console import render_to_console
 
 
 class TestRenderToConsole(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestRenderToConsole(unittest.TestCase):
     def test_available_instances(self, mock_stdout):
         render_to_console(
             True,
-            [self.mock_instance],
+            {self.mock_instance.instance_type.name},
             self.mock_session_start_time,
             None,
             self.mock_start_time,
@@ -40,7 +40,7 @@ class TestRenderToConsole(unittest.TestCase):
     def test_no_instances_no_last_available(self, mock_stdout):
         render_to_console(
             False,
-            [],
+            set(),
             None,
             None,
             self.mock_start_time,
@@ -52,7 +52,7 @@ class TestRenderToConsole(unittest.TestCase):
     def test_no_instances_with_last_available(self, mock_stdout):
         render_to_console(
             False,
-            [],
+            set(),
             None,
             self.mock_session_end_time,
             self.mock_start_time,
@@ -65,7 +65,7 @@ class TestRenderToConsole(unittest.TestCase):
         long_last_available_time = datetime.datetime(2023, 1, 1, 1, 0, 0)
         render_to_console(
             False,
-            [],
+            set(),
             None,
             long_last_available_time,
             self.mock_start_time,
@@ -87,7 +87,7 @@ class TestRenderToConsole(unittest.TestCase):
         )
         render_to_console(
             True,
-            [self.mock_instance, mock_instance2],
+            {self.mock_instance.instance_type.name, mock_instance2.instance_type.name},
             self.mock_session_start_time,
             None,
             self.mock_start_time,
@@ -112,7 +112,7 @@ class TestRenderToConsole(unittest.TestCase):
                                f"Duration since start: {duration_since_start}")
             render_to_console(
                 False,
-                [],
+                set(),
                 None,
                 None,
                 self.mock_start_time,
@@ -135,7 +135,7 @@ class TestRenderToConsole(unittest.TestCase):
                                f"Availability Duration: {duration_since_start}")
             render_to_console(
                 True,
-                [self.mock_instance],
+                {self.mock_instance.instance_type.name},
                 self.mock_start_time,
                 None,
                 self.mock_start_time,
@@ -177,7 +177,7 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                                    f"Availability Duration: {current_time - last_available_time}")
                 render_to_console(
                     True,
-                    instances,
+                    set([i.instance_type.name for i in instances]),
                     last_available_time,
                     None,
                     self.mock_start_time,
@@ -192,7 +192,7 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                                    f"Duration {duration_message}: {duration_since_reference}")
                 render_to_console(
                     False,
-                    [],
+                    set(),
                     None,
                     last_available_time,
                     self.mock_start_time,
@@ -234,7 +234,7 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                                    f"Availability Duration: {current_time - last_available_time}")
                 render_to_console(
                     True,
-                    instances,
+                    set([i.instance_type.name for i in instances]),
                     last_available_time,
                     None,
                     self.mock_start_time,
@@ -251,7 +251,7 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                                    f"Duration {duration_message}: {duration_since_reference}")
                 render_to_console(
                     False,
-                    [],
+                    set(),
                     None,
                     last_available_time,
                     self.mock_start_time,
@@ -280,7 +280,7 @@ class TestRenderToConsoleNotAvailableUpdates(unittest.TestCase):
                                f"Duration since start: {duration_since_start}")
             render_to_console(
                 False,
-                [],
+                set(),
                 None,
                 None,
                 self.mock_start_time,
