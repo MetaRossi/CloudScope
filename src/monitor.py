@@ -1,8 +1,8 @@
 import logging
 import os
-from typing import Set, Dict
+from typing import Set, Dict, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
 import lambda_api
 import output_console
@@ -22,18 +22,18 @@ class Monitor(BaseModel):
 
     Attributes:
         config (Config): The application configuration.
-        tracker (Tracker): The tracker for monitoring instance availability.
+        _tracker (Tracker): The tracker for monitoring instance availability.
     """
     # Required fields
     config: Config
     # Handled in code
-    tracker: Tracker
+    _tracker: Optional[Tracker] = PrivateAttr(default=None)
 
     def __init__(self, **data):
         super().__init__(**data)
 
         # Initialize the tracker
-        self.tracker = Tracker(start_time=self.config.start_time)
+        self._tracker = Tracker(start_time=self.config.start_time)
 
     def poll(self) -> None:
         """
@@ -52,17 +52,17 @@ class Monitor(BaseModel):
             return
 
         # Update the tracker with the fetched availabilities
-        self.tracker.update(fetched_availabilities, fetch_time)
+        self._tracker.update(fetched_availabilities, fetch_time)
 
         # Log the instance changes
-        output_log.log_instance_changes(self.tracker)
+        output_log.log_instance_changes(self._tracker)
 
         # Update the console output with the latest availability information
-        output_console.render_console_output(self.tracker)
+        output_console.render_console_output(self._tracker)
 
         # Log when a region not in the config.static_regions_dict is observed
         # When a new region is observed, it is added to the config.new_logged_regions set to prevent logging it again
-        Monitor._detect_new_regions(self.tracker.current_availabilities,
+        Monitor._detect_new_regions(self._tracker.current_availabilities,
                                     self.config.new_logged_regions,
                                     self.config.enable_voice_notifications)
 

@@ -126,7 +126,7 @@ def fetch_instance_availabilities(api_key: str,
                     instance_availability = InstanceAvailability(
                         instance_type=instance_type,
                         start_time=fetch_time,
-                        last_seen_time=fetch_time
+                        last_time_available=fetch_time
                     )
                     instance_availability_list.append(instance_availability)
 
