@@ -4,7 +4,7 @@ from typing import Tuple, Dict, Any, List, Optional, Set
 
 import requests
 
-from src.data_structures import InstanceAvailability, InstanceType
+from src.instance import InstanceAvailability, InstanceType
 
 
 def static_dict_of_known_regions() -> Dict[str, str]:

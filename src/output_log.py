@@ -1,6 +1,6 @@
 import logging
 
-from src.data_structures import InstanceAvailability
+from src.instance import InstanceAvailability
 from tracker import Tracker
 
 

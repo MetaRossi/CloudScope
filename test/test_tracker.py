@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from data_structures import InstanceType, InstanceAvailability
+from instance import InstanceType, InstanceAvailability
 from generators import availabilities_generator
 from tracker import Tracker
 

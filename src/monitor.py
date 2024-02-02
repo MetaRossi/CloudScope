@@ -7,7 +7,7 @@ from pydantic import BaseModel, PrivateAttr
 import lambda_api
 import output_console
 import output_log
-from data_structures import InstanceType, InstanceAvailability
+from instance import InstanceType, InstanceAvailability
 from src.config import Config
 from src.lambda_api import fetch_instance_availabilities
 from tracker import Tracker

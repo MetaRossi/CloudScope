@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.data_structures import InstanceAvailability, InstanceType
+from src.instance import InstanceAvailability, InstanceType
 from src.output_log import log_instance_info
 
 
