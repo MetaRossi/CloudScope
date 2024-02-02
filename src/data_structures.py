@@ -1,8 +1,8 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class InstanceType(BaseModel):
@@ -11,18 +11,22 @@ class InstanceType(BaseModel):
     region: str
 
     class Config:
-        frozen = True  # One way to make the class immutable and hashable
+        frozen = True  # Make entire class immutable
 
 
 class InstanceAvailability(BaseModel):
-    instance_type: InstanceType
-    start_time: datetime
-    last_time_available: datetime = None
+    instance_type: InstanceType = Field(frozen=True)
+    start_time: datetime = Field(frozen=True)
+    last_time_available: datetime
 
-    def update(self, current_time: datetime):
+    # Make equality check only compare the instance_type field
+    def __eq__(self, other):
+        return self.instance_type == other.instance_type
+
+    def update(self, current_time: datetime) -> None:
         self.last_time_available = current_time
 
-    def get_duration(self):
+    def get_duration(self) -> timedelta:
         return self.last_time_available - self.start_time
 
     @classmethod

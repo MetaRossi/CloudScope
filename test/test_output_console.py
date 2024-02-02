@@ -4,9 +4,9 @@ import unittest
 from io import StringIO
 from unittest.mock import patch
 
+from helpers import helper_assert_and_print
 from src.data_structures import InstanceAvailability, InstanceType
-from src.output import render_to_console
-from test.helpers import helper_assert_and_print
+from src.output_console import render_to_console
 
 
 class TestRenderToConsole(unittest.TestCase):
@@ -22,14 +22,14 @@ class TestRenderToConsole(unittest.TestCase):
         self.mock_instance = InstanceAvailability(
             instance_type=self.mock_instance_type,
             start_time=self.mock_start_time,
-            last_seen_time=self.mock_start_time
+            last_time_available=self.mock_start_time
         )
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_available_instances(self, mock_stdout):
         render_to_console(
             True,
-            [self.mock_instance],
+            {self.mock_instance.instance_type.name},
             self.mock_session_start_time,
             None,
             self.mock_start_time,
@@ -40,7 +40,7 @@ class TestRenderToConsole(unittest.TestCase):
     def test_no_instances_no_last_available(self, mock_stdout):
         render_to_console(
             False,
-            [],
+            set(),
             None,
             None,
             self.mock_start_time,
@@ -52,7 +52,7 @@ class TestRenderToConsole(unittest.TestCase):
     def test_no_instances_with_last_available(self, mock_stdout):
         render_to_console(
             False,
-            [],
+            set(),
             None,
             self.mock_session_end_time,
             self.mock_start_time,
@@ -65,7 +65,7 @@ class TestRenderToConsole(unittest.TestCase):
         long_last_available_time = datetime.datetime(2023, 1, 1, 1, 0, 0)
         render_to_console(
             False,
-            [],
+            set(),
             None,
             long_last_available_time,
             self.mock_start_time,
@@ -83,11 +83,11 @@ class TestRenderToConsole(unittest.TestCase):
         mock_instance2 = InstanceAvailability(
             instance_type=mock_instance2_type,
             start_time=self.mock_start_time,
-            last_seen_time=self.mock_start_time
+            last_time_available=self.mock_start_time
         )
         render_to_console(
             True,
-            [self.mock_instance, mock_instance2],
+            {self.mock_instance.instance_type.name, mock_instance2.instance_type.name},
             self.mock_session_start_time,
             None,
             self.mock_start_time,
@@ -96,7 +96,7 @@ class TestRenderToConsole(unittest.TestCase):
         self.assertIn("test-instance", mock_stdout.getvalue())
         self.assertIn("test-instance-2", mock_stdout.getvalue())
 
-    @patch('src.output.datetime')
+    @patch('src.output_console.datetime')
     @patch('sys.stdout', new_callable=StringIO)
     def test_no_availability_five_messages(self, mock_stdout, mock_datetime):
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=5 * i) for i in range(5)]
@@ -112,7 +112,7 @@ class TestRenderToConsole(unittest.TestCase):
                                f"Duration since start: {duration_since_start}")
             render_to_console(
                 False,
-                [],
+                set(),
                 None,
                 None,
                 self.mock_start_time,
@@ -121,7 +121,7 @@ class TestRenderToConsole(unittest.TestCase):
             # Check the buffer content after each message
             helper_assert_and_print(expected_output, i, mock_stdout)
 
-    @patch('src.output.datetime')
+    @patch('src.output_console.datetime')
     @patch('sys.stdout', new_callable=StringIO)
     def test_one_availability_five_messages(self, mock_stdout, mock_datetime):
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=5 * i) for i in range(5)]
@@ -135,7 +135,7 @@ class TestRenderToConsole(unittest.TestCase):
                                f"Availability Duration: {duration_since_start}")
             render_to_console(
                 True,
-                [self.mock_instance],
+                {self.mock_instance.instance_type.name},
                 self.mock_start_time,
                 None,
                 self.mock_start_time,
@@ -156,10 +156,10 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
         self.mock_instance = InstanceAvailability(
             instance_type=self.mock_instance_type,
             start_time=self.mock_start_time,
-            last_seen_time=self.mock_start_time
+            last_time_available=self.mock_start_time
         )
 
-    @patch('src.output.datetime')
+    @patch('src.output_console.datetime')
     @patch('sys.stdout', new_callable=StringIO)
     def test_switching_availability_three_times(self, mock_stdout, mock_datetime):
         mock_times = [datetime.datetime(2024, 1, 1, 1, minute, 0) for minute in range(12)]
@@ -177,7 +177,7 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                                    f"Availability Duration: {current_time - last_available_time}")
                 render_to_console(
                     True,
-                    instances,
+                    set([i.instance_type.name for i in instances]),
                     last_available_time,
                     None,
                     self.mock_start_time,
@@ -192,7 +192,7 @@ class TestRenderToConsoleSwitching(unittest.TestCase):
                                    f"Duration {duration_message}: {duration_since_reference}")
                 render_to_console(
                     False,
-                    [],
+                    set(),
                     None,
                     last_available_time,
                     self.mock_start_time,
@@ -212,10 +212,10 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
         self.mock_instance = InstanceAvailability(
             instance_type=self.mock_instance_type,
             start_time=self.mock_start_time,
-            last_seen_time=self.mock_start_time
+            last_time_available=self.mock_start_time
         )
 
-    @patch('src.output.datetime')
+    @patch('src.output_console.datetime')
     @patch('sys.stdout', new_callable=StringIO)
     def test_switching_start_not_available(self, mock_stdout, mock_datetime):
         mock_times = [datetime.datetime(2024, 1, 1, 1, minute, 0) for minute in range(12)]
@@ -234,7 +234,7 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                                    f"Availability Duration: {current_time - last_available_time}")
                 render_to_console(
                     True,
-                    instances,
+                    set([i.instance_type.name for i in instances]),
                     last_available_time,
                     None,
                     self.mock_start_time,
@@ -251,7 +251,7 @@ class TestRenderToConsoleSwitchingStartNotAvailable(unittest.TestCase):
                                    f"Duration {duration_message}: {duration_since_reference}")
                 render_to_console(
                     False,
-                    [],
+                    set(),
                     None,
                     last_available_time,
                     self.mock_start_time,
@@ -264,7 +264,7 @@ class TestRenderToConsoleNotAvailableUpdates(unittest.TestCase):
     def setUp(self):
         self.mock_start_time = datetime.datetime(2024, 1, 1, 0, 0, 0)
 
-    @patch('src.output.datetime')
+    @patch('src.output_console.datetime')
     @patch('sys.stdout', new_callable=StringIO)
     def test_not_available_updates(self, mock_stdout, mock_datetime):
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=10 * i) for i in range(10)]
@@ -280,7 +280,7 @@ class TestRenderToConsoleNotAvailableUpdates(unittest.TestCase):
                                f"Duration since start: {duration_since_start}")
             render_to_console(
                 False,
-                [],
+                set(),
                 None,
                 None,
                 self.mock_start_time,
@@ -296,21 +296,21 @@ class TestRenderToConsoleAvailableRandomUpdates(unittest.TestCase):
             "instance1": InstanceAvailability(
                 instance_type=InstanceType(name="instance1", description="Instance type 1", region="us-west-1"),
                 start_time=self.mock_start_time,
-                last_seen_time=self.mock_start_time
+                last_time_available=self.mock_start_time
             ),
             "instance2": InstanceAvailability(
                 instance_type=InstanceType(name="instance2", description="Instance type 2", region="us-east-1"),
                 start_time=self.mock_start_time,
-                last_seen_time=self.mock_start_time
+                last_time_available=self.mock_start_time
             ),
             "instance3": InstanceAvailability(
                 instance_type=InstanceType(name="instance3", description="Instance type 3", region="eu-central-1"),
                 start_time=self.mock_start_time,
-                last_seen_time=self.mock_start_time
+                last_time_available=self.mock_start_time
             )
         }
 
-    @patch('src.output.datetime')
+    @patch('src.output_console.datetime')
     @patch('sys.stdout', new_callable=StringIO)
     def test_available_random_updates(self, mock_stdout, mock_datetime):
         mock_times = [self.mock_start_time + datetime.timedelta(minutes=5 * i) for i in range(20)]
@@ -328,7 +328,7 @@ class TestRenderToConsoleAvailableRandomUpdates(unittest.TestCase):
                                f"Availability Duration: {duration_since_last_available}")
             render_to_console(
                 True,
-                available_instances,
+                instance_names,
                 last_available_time,
                 None,
                 self.mock_start_time,
