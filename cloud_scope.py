@@ -3,8 +3,8 @@ import argparse
 import toml
 
 from core.api_throttle import APIThrottle
-from managers.configmanager import ConfigManager
 from core.monitor import Monitor
+from managers.configmanager import ConfigManager
 
 if __name__ == "__main__":
     # Parse command line arguments

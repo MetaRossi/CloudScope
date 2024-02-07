@@ -4,11 +4,11 @@ from typing import Set, Dict, Optional
 
 from pydantic import BaseModel, PrivateAttr
 
+from core import console, log, lambda_api
+from core.lambda_api import fetch_instance_availabilities
 from core.tracker import Tracker
 from data_structures.instance import InstanceType, InstanceAvailability
-from core import console, log, lambda_api
 from managers.configmanager import ConfigManager
-from core.lambda_api import fetch_instance_availabilities
 
 
 # TODO alert if a new region is observed; not one in the lambda API region dict

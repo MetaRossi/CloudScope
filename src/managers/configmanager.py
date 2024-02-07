@@ -4,8 +4,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, List
 
-from pydantic import BaseModel, Field, field_validator, PrivateAttr
 from email_validator import validate_email, EmailNotValidError
+from pydantic import BaseModel, Field, field_validator, PrivateAttr
 
 from core import lambda_api, smtp
 from data_structures.allow import AllowInstances

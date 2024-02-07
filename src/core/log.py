@@ -1,7 +1,7 @@
 import logging
 
-from data_structures.instance import InstanceAvailability
 from core.tracker import Tracker
+from data_structures.instance import InstanceAvailability
 
 
 def log_instance_changes(tracker: Tracker) -> None:

@@ -3,9 +3,9 @@ from datetime import datetime
 from unittest.mock import patch
 
 from core import lambda_api
+from core.monitor import Monitor
 from generators import availabilities_generator
 from managers.configmanager import ConfigManager
-from core.monitor import Monitor
 
 
 class MonitorDetectNewRegions(unittest.TestCase):

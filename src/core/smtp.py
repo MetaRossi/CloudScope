@@ -1,7 +1,7 @@
 import logging
 import smtplib
 from email.message import EmailMessage
-from typing import Set, List
+from typing import List
 
 from core.console import print_console_message
 from managers.configmanager import ConfigManager
