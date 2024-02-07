@@ -4,13 +4,11 @@ from typing import Set, Dict, Optional
 
 from pydantic import BaseModel, PrivateAttr
 
-import lambda_api
-import output_console
-import output_log
-from instance import InstanceType, InstanceAvailability
-from src.config import Config
-from src.lambda_api import fetch_instance_availabilities
-from tracker import Tracker
+from core.tracker import Tracker
+from data_structures.instance import InstanceType, InstanceAvailability
+from core import console, log, lambda_api
+from managers.configmanager import ConfigManager
+from core.lambda_api import fetch_instance_availabilities
 
 
 # TODO alert if a new region is observed; not one in the lambda API region dict
@@ -21,11 +19,11 @@ class Monitor(BaseModel):
     Monitor class for tracking and logging the availability of cloud instances.
 
     Attributes:
-        config (Config): The application configuration.
+        config (ConfigManager): The application configuration.
         _tracker (Tracker): The tracker for monitoring instance availability.
     """
     # Required fields
-    config: Config
+    config: ConfigManager
     # Handled in code
     _tracker: Optional[Tracker] = PrivateAttr(default=None)
 
@@ -55,15 +53,15 @@ class Monitor(BaseModel):
         self._tracker.update(fetched_availabilities, fetch_time)
 
         # Log the instance changes
-        output_log.log_instance_changes(self._tracker)
+        log.log_instance_changes(self._tracker)
 
-        # Update the console output with the latest availability information
-        output_console.render_console_output(self._tracker)
+        # Update the console managers with the latest availability information
+        console.render_console_output(self._tracker)
 
         # Log when a region not in the config.static_regions_dict is observed
         # When a new region is observed, it is added to the config.new_logged_regions set to prevent logging it again
         Monitor._detect_new_regions(self._tracker.current_availabilities,
-                                    self.config.new_logged_regions,
+                                    self.config.get_new_logged_regions(),
                                     self.config.enable_voice_notifications)
 
     @staticmethod
@@ -87,10 +85,11 @@ class Monitor(BaseModel):
         for region in new_regions:
             if region not in new_logged_regions:
                 logging.critical(f"New region observed: {region}")
-                print(f"""{Config.now_formatted_str()} - New region observed: {region}""")
+                print(f"""{ConfigManager.now_formatted_str()} - New region observed: {region}""")
                 if enable_voice_notifications:
                     os.system('say "New Region Detected"')
                 # TODO send an email alert; this should not occur often
 
         # Prevent logging the same new regions multiple times
         new_logged_regions.update(new_regions)
+        # TODO this is a side effect; should add with config.add_new_logged_region

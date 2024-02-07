@@ -2,7 +2,7 @@ import random
 from datetime import timedelta, datetime
 from typing import Dict, List, Optional
 
-from src.instance import InstanceType, InstanceAvailability
+from data_structures.instance import InstanceType, InstanceAvailability
 
 
 def type_generator(type_list: Optional[List[str]] = None) -> str:

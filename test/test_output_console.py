@@ -5,8 +5,8 @@ from io import StringIO
 from unittest.mock import patch
 
 from helpers import helper_assert_and_print
-from src.instance import InstanceAvailability, InstanceType
-from src.output_console import render_to_console
+from data_structures.instance import InstanceAvailability, InstanceType
+from core.console import render_to_console
 
 
 class TestRenderToConsole(unittest.TestCase):

@@ -71,7 +71,7 @@ I like well annotated configuration files, so I have included comments for each 
 # REQUIRED: The interval between API requests in milliseconds.
 min_poll_delay_ms = 1500
 # Lambda Labs will rate limit requests to the API if polled at less than one request per second.
-# If this occurs, you will see HTML in the console output.
+# If this occurs, you will see HTML in the console managers.
 # A minimum delay of 1100 ms is required by the application to add a little buffer.
  
 # REQUIRED: Directory to store log files.

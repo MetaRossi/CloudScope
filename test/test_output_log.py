@@ -3,8 +3,8 @@ from datetime import datetime
 from unittest import TestCase
 from unittest.mock import patch
 
-from src.instance import InstanceAvailability, InstanceType
-from src.output_log import log_instance_info
+from data_structures.instance import InstanceAvailability, InstanceType
+from core.log import log_instance_info
 
 
 class LogInstanceInfoTests(TestCase):

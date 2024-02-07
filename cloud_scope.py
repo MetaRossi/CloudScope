@@ -2,9 +2,9 @@ import argparse
 
 import toml
 
-from src.api_throttle import APIThrottle
-from src.config import Config
-from src.monitor import Monitor
+from core.api_throttle import APIThrottle
+from managers.configmanager import ConfigManager
+from core.monitor import Monitor
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     namespace_config = config_data[args.namespace]
 
     # Create an instance of the Config class, which also sets up logging
-    config = Config(**namespace_config)
+    config = ConfigManager(**namespace_config)
 
     # Create an instance of the Monitor class
     monitor = Monitor(config=config)

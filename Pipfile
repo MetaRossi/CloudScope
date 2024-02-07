@@ -8,6 +8,8 @@ requests = "*"
 pydantic = "*"
 toml = "*"
 icecream = "*"
+email-validator = "*"
+console = "*"
 
 [dev-packages]
 coverage = "*"

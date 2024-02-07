@@ -4,10 +4,10 @@ from io import StringIO
 
 def helper_assert_and_print(expected_output: str, i: int, mock_stdout: StringIO) -> None:
     """
-    Helper function to assert and print output in tests.
+    Helper function to assert and print managers in tests.
 
     Args:
-        expected_output (str): The expected output string.
+        expected_output (str): The expected managers string.
         i (int): The iteration count.
         mock_stdout (StringIO): The mocked stdout buffer.
 

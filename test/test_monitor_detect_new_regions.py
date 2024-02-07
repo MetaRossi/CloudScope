@@ -2,10 +2,10 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch
 
-from src import lambda_api
-from src.config import Config
-from src.monitor import Monitor
-from test.generators import availabilities_generator
+from core import lambda_api
+from generators import availabilities_generator
+from managers.configmanager import ConfigManager
+from core.monitor import Monitor
 
 
 class MonitorDetectNewRegions(unittest.TestCase):
@@ -44,7 +44,7 @@ class MonitorDetectNewRegions(unittest.TestCase):
         Monitor._detect_new_regions(availabilities, new_logged_regions, enable_voice_notifications=True)
         mock_logging.critical.assert_called_with(f"New region observed: {new_region}")
         mock_system.assert_called_with('say "New Region Detected"')
-        mock_print.assert_called_with(f"{Config.now_formatted_str(fixed_now)} - New region observed: {new_region}")
+        mock_print.assert_called_with(f"{ConfigManager.now_formatted_str(fixed_now)} - New region observed: {new_region}")
         self.assertIn(new_region, new_logged_regions)
 
     @patch('src.monitor.logging')
@@ -82,5 +82,5 @@ class MonitorDetectNewRegions(unittest.TestCase):
         Monitor._detect_new_regions(availabilities, new_logged_regions, enable_voice_notifications=False)
         mock_logging.critical.assert_called_with(f"New region observed: {new_region}")
         mock_system.assert_not_called()
-        mock_print.assert_called_with(f"{Config.now_formatted_str(fixed_now)} - New region observed: {new_region}")
+        mock_print.assert_called_with(f"{ConfigManager.now_formatted_str(fixed_now)} - New region observed: {new_region}")
         self.assertIn(new_region, new_logged_regions)

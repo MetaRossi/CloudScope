@@ -1,13 +1,19 @@
 from datetime import datetime
 from typing import Optional, Set
 
-from tracker import Tracker
+from core.tracker import Tracker
+
+
+def print_console_message(current_time: datetime = datetime.now(), message: str = "", do_r: bool = False) -> None:
+    print(get_console_message(current_time, message, do_r))
+
+
+def get_console_message(current_time: datetime = datetime.now(), message: str = "", do_r: bool = False) -> str:
+    return f"{'\r' if do_r else ''}{current_time:%Y-%m-%d %H:%M:%S.%f} - {message}"
 
 
 def render_console_output(tracker: Tracker) -> None:
-    """
-    Updates console output with the latest availability information.
-    """
+    """Updates console managers with the latest availability information."""
     # Print a newline if there are any changes to the instance availability
     # Prevent printing a newline on the first poll with did_observe_instances
     if ((tracker.has_new_availabilities() or tracker.has_removed_availabilities())
@@ -15,7 +21,7 @@ def render_console_output(tracker: Tracker) -> None:
             and not tracker.is_first_poll):
         print()
 
-    # Render the console output
+    # Render the console managers
     render_to_console(
         is_available=tracker.is_session_active(),
         instance_names=tracker.get_current_names(),
@@ -37,9 +43,10 @@ def render_to_console(
         available_instance_names = set([instance for instance in instance_names])
         duration = current_time - session_start_time
 
-        output = f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - ' \
-                 f'Available Instances: {available_instance_names}, ' \
-                 f'Availability Duration: {duration}'
+        message = f'Available Instances: {available_instance_names}, ' \
+                  f'Availability Duration: {duration}'
+
+        output = get_console_message(current_time, message, True)
 
         print(output, end='')
     else:
@@ -59,9 +66,10 @@ def render_to_console(
 
         duration_since_reference = current_time - reference_time
 
-        output = f'\r{current_time:%Y-%m-%d %H:%M:%S.%f} - ' \
-                 f'No instances available. ' \
-                 f'{last_message}: {reference_time:%Y-%m-%d %H:%M:%S.%f}, ' \
-                 f'Duration {duration_message}: {duration_since_reference}'
+        message = f'No instances available. ' \
+                  f'{last_message}: {reference_time:%Y-%m-%d %H:%M:%S.%f}, ' \
+                  f'Duration {duration_message}: {duration_since_reference}'
+
+        output = get_console_message(current_time, message, True)
 
         print(output, end='')

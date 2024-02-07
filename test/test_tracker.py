@@ -2,9 +2,9 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from instance import InstanceType, InstanceAvailability
+from data_structures.instance import InstanceType, InstanceAvailability
 from generators import availabilities_generator
-from tracker import Tracker
+from core.tracker import Tracker
 
 
 class TestTracker(unittest.TestCase):

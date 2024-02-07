@@ -3,7 +3,7 @@ from typing import Optional, Dict, Set
 
 from pydantic import BaseModel, Field
 
-from instance import InstanceAvailability, InstanceType
+from data_structures.instance import InstanceAvailability, InstanceType
 
 
 class Tracker(BaseModel):
